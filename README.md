@@ -8,11 +8,21 @@
 2. Open **Advanced editor** and replace its contents with the workbook JSON.
 3. Select **Apply**, then **Done Editing**. Select the management groups, subscriptions, and Log Analytics workspaces to assess. The preview remains unsaved until you explicitly save it.
 4. Choose a lookback period. The default is 48 hours; begin with a short interval for larger environments.
-5. Review query errors, warnings, and truncation before interpreting missing evidence. Use the Documentation control for detailed guidance.
+5. Review query errors, warnings, and truncation before interpreting missing evidence. **Show help** defaults to **Show** and provides the scope, mappings, interpretation, and limitations.
 
 Read access to the selected resources and Defender pricing configuration (`Microsoft.Security/pricings/read`), plus permission to query the selected workspaces and tables, is required. Microsoft Sentinel is optional for the coverage queries. Existing Sentinel-specific navigation requires a Sentinel workspace.
 
 The queries are read-only. Diagnostic settings, collection rules, Defender plans, and policies are not changed automatically. Existing navigation/onboarding actions remain separate from the evidence checks.
+
+## Help and compact mode
+
+The single **Show help** control appears before the introduction and replaces **Detailed guidance**. It defaults to **Show**. The introduction explicitly explains why the main resource comparison is scoped to Defender for Cloud workload protection: 16 supported Azure/Arc resource types mapped to nine workload plans, including resources whose plans are disabled or unknown.
+
+The workload guidance includes a resource-type / plan / log-evidence matrix, the five comparison states, a Key Vault example, the statistics denominator, and coverage boundaries. It distinguishes subscription configuration from effective resource protection, and observed records from verified diagnostic settings. The five other tabs retain their separate assessment scope.
+
+Help uses icon-led headings, horizontal dividers, bold lead-ins, short lists, warning callouts, and source/mapping tables. The introduction retains the shield title and distinct Prerequisites, Purpose, Key Objectives, and Data Sources sections. These use native workbook Markdown and follow the portal theme.
+
+Select **Hide** for compact mode. All explanatory Markdown disappears across all six tabs, including the introduction, standalone headings, guidance, coverage notes, action descriptions, and references. Scope controls, tabs, the resource-type picker, chart titles, legends, grids, action links, and runtime errors remain available. Help visibility does not change queries or scope selections. Select **Show** to restore the text.
 
 ## Views
 
@@ -132,6 +142,8 @@ Named log sources decreased from **101 to 48**: 55 dedicated sources for those r
 - The local development copy has an intentionally untracked PowerShell regression suite. It validates JSON, embedded merges, mappings, evidence contracts, and identity/state models, not live KQL/ARG execution.
 - Read-only browser testing in the Microsoft Defender portal on 10 November 2026 verified the three repaired donut charts against a live resource grid. One subscription and one workspace over 48 hours returned 28 assets: 9 with observed logs, 9 with both signals, and 28 with an enabled subscription plan. These are test-scope results, not a coverage claim for other environments.
 - All five other tabs rendered their grids in that smoke test; Entra displayed all 11 reference tables. The Defender subscription overview returned 13 plan rows after retrying a transient "No resources selected" error following JSON import. Retry or refresh a failed control and review its result before interpreting coverage.
+- Read-only Playwright testing in VS Code's integrated Defender browser on 11 November 2026 verified default **Show**, **Hide** across all six tabs with grids retained, and restoration of every expected explanatory block. Screenshots confirmed the mapping table and compact chart layout. The selected lab workspace and 48-hour lookback were retained; both help states showed the same 28 assets, 9 with logs, 9 with both signals, and 28 with an enabled plan. Initial import scope errors cleared after refresh; the workspace was explicitly selected instead of the default **Any one**. The preview remained unsaved with help shown.
+- The help and presentation updates pass 363 local contract/model checks. Structured before/after comparisons confirmed that existing queries, chart/grid settings, scope parameters, tab navigation, actions, and group visibility were unchanged. The restored icon-led layout was also checked in the Defender preview: no text overflow, all explanatory text hidden in compact mode, charts/grids retained, and styled guidance restored with the lab workspace selection intact.
 - Disabled/unknown plan partitions and empty/all/none-covered scopes are covered by local fixtures, not demonstrated by the live scope. Multi-subscription/workspace behavior, restricted permissions, every drilldown/action, and every supported resource type still require representative testing. No workbook was saved and no cloud settings were changed during validation.
 - VS Code reports the existing untrusted remote workbook-schema warning; parsing JSON is not full schema validation.
 
@@ -141,6 +153,7 @@ Only the workbook JSON and this README are intended for version control. Local s
 
 ## Microsoft Learn references
 
+- [Parameter-driven conditional visibility](https://learn.microsoft.com/azure/azure-monitor/visualize/workbooks-interactive-reports#set-conditional-visibility)
 - [Workbook pie charts and chart metrics](https://learn.microsoft.com/en-us/azure/azure-monitor/visualize/workbooks-chart-visualizations#pie-charts)
 - [Workbook data sources and merge behavior](https://learn.microsoft.com/en-us/azure/azure-monitor/visualize/workbooks-data-sources#merge)
 - [Reusing query results in different visualizations](https://learn.microsoft.com/en-us/azure/azure-monitor/visualize/workbooks-interactive-reports#reuse-query-data-in-different-visualizations)

@@ -2,15 +2,44 @@
   "version": "Notebook/1.0",
   "items": [
     {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "b9c3c4fe-5fde-45a7-bcee-4790e3ddf83a",
+            "version": "KqlParameterItem/1.0",
+            "name": "Documentation",
+            "label": "Show help",
+            "type": 10,
+            "isRequired": true,
+            "value": "On",
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "jsonData": "[{\"value\":\"On\",\"label\":\"Show\",\"selected\":true},{\"value\":\"Off\",\"label\":\"Hide\"}]"
+          }
+        ],
+        "style": "above"
+      },
+      "name": "parametersHelp"
+    },
+    {
       "type": 1,
       "content": {
-        "json": "# 🛡️ Azure Log Coverage\r\n## Azure resource inventory & Log Analytics ingestion assessment\r\n\r\n---\r\n\r\n### ⚠️ Prerequisites\r\nRead access to the Azure resources in scope and permission to query the selected Log Analytics workspaces are required. Logs must already be routed to those workspaces; this workbook does **not** automatically enable collection. Microsoft Sentinel is optional for coverage analysis, but the Sentinel connector actions require a Sentinel-enabled workspace.\r\n\r\n---\r\n\r\n### 📋 Purpose\r\nAssess **which Azure resources and log sources have observable data in Log Analytics** and identify potential monitoring gaps. The workbook compares Azure Resource Graph inventory with log evidence across selected subscriptions, workspaces, and a lookback period. It covers virtual machines, supported PaaS services, Azure Activity Logs, NSG and VNet Traffic Analytics, Microsoft Entra ID logs, and workspace query auditing.\r\n\r\n### 🎯 Key Objectives\r\n- **Identify potential coverage gaps:** find inventoried resources with no matching log evidence.\r\n- **Validate observed ingestion:** check heartbeats and resource logs, including AzureDiagnostics and supported dedicated tables.\r\n- **Inspect the evidence:** review observed PaaS tables and categories, VM agent details, and subscription-level coverage.\r\n- **Prioritize remediation:** investigate missing data before reviewing diagnostic settings, connectors, or AMA onboarding policies.\r\n\r\n### 📊 Data Sources\r\n| Source | Purpose |\r\n|---|---|\r\n| Azure Resource Graph | Resource, subscription, workspace, VM extension, and Network Watcher flow-log configuration inventory. |\r\n| `Heartbeat` | Observed VM agent connectivity during the lookback period. |\r\n| `AzureDiagnostics` and supported dedicated tables | PaaS resource log evidence, including AKS and API Management. |\r\n| `AzureActivity` | Subscription Activity Log ingestion. |\r\n| `AzureNetworkAnalytics_CL` and `NTANetAnalytics` | Observed NSG and VNet flow analytics, including configured subnet/NIC targets. |\r\n| Microsoft Entra ID log tables | Identity audit, sign-in, provisioning, and risk log evidence. |\r\n| `LAQueryLogs` | Log Analytics query audit activity. |\r\n\r\n### 🔎 Interpreting Coverage\r\n**Connected** means matching data was found in the selected workspaces and lookback period. **Disconnected** means no matching data was found by this workbook's checks; it does **not** prove that logging is disabled. Quiet resources, other destinations, and unsupported tables can explain missing matches. Query errors are not evidence of disconnection.\r\n\r\nThis is an **observed-ingestion assessment**, not a complete diagnostic-settings or compliance audit. PaaS resource-type and table coverage uses maintained lists, so new Azure services and tables are not automatically included.\r\n\r\n### 👥 Target Audience\r\nSecurity operations, cloud platform and infrastructure teams, and engineers responsible for monitoring coverage and onboarding."
+        "json": "# 🛡️ Azure Log Coverage\r\n\r\n## Azure resource inventory, Defender plans & Log Analytics evidence\r\n\r\n---\r\n\r\n### ⚠️ Prerequisites\r\n\r\n**Read access** to the selected Azure resources and Defender pricing configuration, plus permission to query the selected Log Analytics workspaces, is required. Logs must already be collected there. Queries are **read-only**; configuration links do not automatically enable logging or protection. Sentinel-specific connector actions require a Sentinel-enabled workspace.\r\n\r\n---\r\n\r\n### 📋 Purpose\r\n\r\nAssess **which resources have observable log evidence**, compare that evidence with Defender for Cloud subscription configuration, and identify potential visibility gaps.\r\n\r\nThe **Defender Workloads & Logs** view focuses on **16 supported Azure and Arc resource types mapped to nine Microsoft Defender for Cloud workload protection plans**. It compares subscription-level plan configuration with resource-attributed logs observed in the selected Log Analytics workspaces and time period. Resources remain in scope when their corresponding plan is disabled or its configuration is unknown.\r\n\r\n**Separate assessments:** VM heartbeats, Azure Activity Logs, Network Flow Logs, Microsoft Entra ID logs, and workspace query auditing retain their own tabs and evidence checks. The main view's Defender-based resource filter does not redefine their scope.\r\n\r\n### 🎯 Key Objectives\r\n\r\n- **Identify potential coverage gaps:** find inventoried resources with no matching log evidence.\r\n- **Compare the two signals:** distinguish configured Defender workload plans from available raw investigation evidence.\r\n- **Inspect the evidence:** review observed tables, categories, timestamps, record counts, and source workspaces.\r\n- **Prioritize follow-up:** investigate missing evidence before reviewing diagnostic settings, connectors, or protection configuration.\r\n\r\n### 📊 Data Sources\r\n\r\n| Source | Purpose |\r\n|---|---|\r\n| **Azure Resource Graph** | Resource, subscription, workspace, VM extension, and Network Watcher flow-log inventory; Defender subscription pricing configuration. |\r\n| `Heartbeat` | Observed VM agent connectivity during the lookback period. |\r\n| `AzureDiagnostics` and supported dedicated tables | Resource log evidence for the supported Defender workload resource types. Both formats are checked together. |\r\n| `AzureActivity` | Subscription Activity Log ingestion. |\r\n| `AzureNetworkAnalytics_CL` and `NTANetAnalytics` | Observed NSG and VNet flow analytics, including configured subnet/NIC targets. |\r\n| Microsoft Entra ID tables | Observed identity sign-in, provisioning, audit, and risk log evidence. |\r\n| `LAQueryLogs` | Log Analytics workspace query auditing. |\r\n\r\n---\r\n\r\n### 🔎 Interpretation\r\n\r\n- **Plan enabled is not verified resource protection.** Resource overrides, onboarding, eligibility, and sensor health need separate checks.\r\n- **Logs observed is not complete logging coverage.** Missing records do not prove that logging is disabled.\r\n- **Scope is deliberate:** this is not a universal Azure logging inventory or a certification of effective resource protection."
       },
       "styleSettings": {
         "margin": "8px 0 16px",
         "padding": "0"
       },
-      "name": "Introduction"
+      "name": "Introduction",
+      "conditionalVisibility": {
+        "parameterName": "Documentation",
+        "comparison": "isEqualTo",
+        "value": "On"
+      }
     },
     {
       "type": 1,
@@ -21,7 +50,12 @@
         "margin": "8px 0",
         "padding": "0"
       },
-      "name": "ScopeHeading"
+      "name": "ScopeHeading",
+      "conditionalVisibility": {
+        "parameterName": "Documentation",
+        "comparison": "isEqualTo",
+        "value": "On"
+      }
     },
     {
       "type": 9,
@@ -181,20 +215,6 @@
               ],
               "allowCustom": true
             }
-          },
-          {
-            "id": "b9c3c4fe-5fde-45a7-bcee-4790e3ddf83a",
-            "version": "KqlParameterItem/1.0",
-            "name": "Documentation",
-            "label": "Detailed guidance",
-            "type": 10,
-            "isRequired": true,
-            "value": "Off",
-            "typeSettings": {
-              "additionalResourceOptions": [],
-              "showDefault": false
-            },
-            "jsonData": "[{\"value\":\"Off\",\"label\":\"Hide\"},{\"value\":\"On\",\"label\":\"Show\"}]"
           }
         ],
         "style": "above",
@@ -210,18 +230,18 @@
     {
       "type": 1,
       "content": {
-        "json": "### 📖 Coverage guidance\r\n\r\n| Evidence | Meaning |\r\n|---|---|\r\n| Azure Resource Graph | Resource and extension inventory in the selected subscriptions. |\r\n| Log Analytics | Matching records in the selected workspaces during the lookback period. |\r\n| PaaS tables and categories | Observed data from AzureDiagnostics and supported dedicated tables, including AKS and API Management. |\r\n\r\n**Scope matters:** selected workspaces may not include every destination. Quiet resources can have diagnostic settings configured without producing records during the lookback period. PaaS coverage uses a maintained resource-type and table list, not automatic discovery of every Azure service.\r\n\r\n**Access and limits:** results depend on resource-read and workspace-query permissions. Table availability and query-plan restrictions can cause errors; an error is not evidence that logging is disabled. Resource grids are capped at 10,000 rows.\r\n\r\n**Actions:** diagnostic-settings links open configuration; they do not enable logging. AMA onboarding actions open Azure Policy assignment for review."
-      },
-      "conditionalVisibility": {
-        "parameterName": "Documentation",
-        "comparison": "isEqualTo",
-        "value": "On"
+        "json": "### 🔍 Evidence and Scope\r\n\r\n| Check | What the workbook shows |\r\n|---|---|\r\n| **Azure Resource Graph inventory** | Supported resources returned under the selected subscriptions and resource types. |\r\n| **Defender subscription configuration** | `Microsoft.Security/pricings`: **Standard = Enabled**, **Free = Disabled**, missing or unrecognized values = **Unknown**. |\r\n| **Log Analytics evidence** | Matching resource-attributed records in `AzureDiagnostics` and supported dedicated tables, within the selected workspaces and lookback. |\r\n| **Investigation context** | Observed tables/categories, audit/access signals, source workspace IDs, record counts, and last-seen timestamps. |\r\n\r\n> ⚠️ **Scope matters:** missing records do not prove that logging is disabled. A quiet resource, another destination, permissions, or unsupported tables can explain a missing match. Query errors and partial or truncated results invalidate negative conclusions.\r\n\r\n---\r\n\r\n### 🧭 Separate Assessments\r\n\r\n| Tab | Evidence checked |\r\n|---|---|\r\n| **Virtual Machines** | Inventory, extensions, and `Heartbeat`, not guest security-log collection. |\r\n| **Activity Logs** | `AzureActivity` ingestion. |\r\n| **Network Flow Logs** | Network Watcher configuration compared with Traffic Analytics. |\r\n| **Microsoft Entra ID** | Ingestion across 11 reference tables. |\r\n| **Workspace Audit** | `LAQueryLogs` against workspace inventory. |\r\n\r\n### 🛠️ Configuration Actions\r\n\r\n- **Diagnostic settings and connectors:** links open configuration for review.\r\n- **AMA onboarding:** actions open Azure Policy assignment.\r\n- **Read-only assessment:** these navigation actions are separate from the evidence checks."
       },
       "styleSettings": {
         "margin": "8px 0 16px",
         "padding": "0"
       },
-      "name": "CoverageGuide"
+      "name": "CoverageGuide",
+      "conditionalVisibility": {
+        "parameterName": "Documentation",
+        "comparison": "isEqualTo",
+        "value": "On"
+      }
     },
     {
       "type": 11,
@@ -300,23 +320,28 @@
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "VMHeading"
+            "name": "VMHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 1,
             "content": {
               "json": "### Agent evidence\r\nExtension inventory and heartbeats are separate signals. A heartbeat match does not prove that every required log is collected. Legacy agent extensions remain visible for migration assessment; onboarding is AMA-only.\r\n\r\n[Azure Monitor Agent overview](https://learn.microsoft.com/en-us/azure/azure-monitor/agents/azure-monitor-agent-overview)"
             },
-            "conditionalVisibility": {
-              "parameterName": "Documentation",
-              "comparison": "isEqualTo",
-              "value": "On"
-            },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "VMGuide"
+            "name": "VMGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 9,
@@ -664,7 +689,12 @@
               "margin": "16px 0 8px",
               "padding": "0"
             },
-            "name": "AMAOnboardingHeading"
+            "name": "AMAOnboardingHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 9,
@@ -772,23 +802,28 @@
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "NSGHeading"
+            "name": "NSGHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 1,
             "content": {
               "json": "### Traffic Analytics evidence\r\nAzureNetworkAnalytics_CL and NTANetAnalytics are checked together for FlowLog records. Configuration comes from Network Watcher flow-log resources in the selected subscriptions; Flow Logs and Traffic Analytics use their enabled flags, not provisioning success. The configured workspace is shown separately from the workspaces searched for data.\r\n\r\nNSGs match full resource IDs reconstructed from subscription/resource-group/name identifiers when needed. Configured VNet/subnet/NIC targets match the flow-log resource ID; targets without a configuration can match explicit full target IDs in retained records. Compact flow-log IDs require the logging subscription from a full flow-log ID or the record's _SubscriptionId. Ambiguous names, compact target-only IDs, and source/destination endpoints are not used to infer coverage.\r\n\r\nAn NSG associated with VNet traffic does not prove that legacy NSG flow logging is enabled. The Evidence and Tables columns distinguish these cases. Disabled configuration can coexist with historical data in the selected lookback. Missing data can reflect a quiet resource, processing delay, workspace scope, missing identifiers, or permissions; query errors are not proof of disconnection. Missing tables are tolerated, but workspace/access/execution failures are not suppressed.\r\n\r\n[Traffic Analytics schema](https://learn.microsoft.com/en-us/azure/network-watcher/traffic-analytics-schema) / [VNet flow logs](https://learn.microsoft.com/en-us/azure/network-watcher/vnet-flow-logs-overview)"
             },
-            "conditionalVisibility": {
-              "parameterName": "Documentation",
-              "comparison": "isEqualTo",
-              "value": "On"
-            },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "NSGGuide"
+            "name": "NSGGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -1003,13 +1038,18 @@
           {
             "type": 1,
             "content": {
-              "json": "## Defender Workloads and Logs\r\nResource log evidence for Defender-relevant Azure services, alongside subscription plan configuration. **Logs are assessed only in the selected Log Analytics workspaces and lookback.** Subscription enablement is not proof of effective resource protection."
+              "json": "## 🛡️ Defender Workloads and Logs\r\n\r\nCompare observed raw logs with the corresponding Defender for Cloud subscription plan. Disabled and unknown plans stay visible; an enabled subscription plan does not establish effective protection of each resource."
             },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "PaaSHeading"
+            "name": "PaaSHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 9,
@@ -1057,18 +1097,18 @@
           {
             "type": 1,
             "content": {
-              "json": "### Reading the comparison\r\n**Log evidence** means at least one resource-attributed record was observed; it does not certify every category or an investigation baseline. **Not observed** means no match in the selected workspaces and lookback, not that logging is disabled. A quiet resource or a different destination can explain the absence. Query failures, partial results, and access warnings invalidate negative conclusions.\r\n\r\n**Subscription plan** comes from Microsoft.Security/pricings in Azure Resource Graph. Standard maps to Enabled, Free to Disabled, and missing/unrecognized values to Unknown. Disabled plans remain visible. Missing pricing records are never treated as Free. **Resource protection is Not verified:** resource overrides, exclusions, API onboarding, sensor health, supported regions/SKUs, and feature-specific settings require separate verification. The comparison describes the subscription setting, not a protection certification.\r\n\r\nBoth **AzureDiagnostics and resource-specific sources** are checked. Storage child-service IDs roll up to their account; other resources, including databases and deployment slots, retain their full IDs. Categories pair each observed category with its table; the table name is a fallback when a diagnostic category is unavailable. Workspaces contains the observed TenantId workspace identifiers where supplied by the source tables. Last seen and Records describe the selected window; records are not deduplicated across tables or workspaces.\r\n\r\n**Investigation signals** highlights audit/access evidence separately from other logs. No highlighted signal is not proof that no useful data exists. PostgreSQL server logs do not establish pgAudit configuration. API Management service logs do not prove every API is logged or onboarded. Kubernetes audit-admin is a subset of full audit; container logs do not prove runtime sensor health. Storage Queue/Table logs are retained as context, not evidence for Blob/Files protection.\r\n\r\nThis workbook does not inspect diagnostic settings, DCRs, Event Hubs, Storage destinations, Defender XDR hunting data, or retention configuration. Open settings is navigation only. Collection must already be configured. Basic/Auxiliary scope and query charges apply; Basic-only queries are limited to the past 30 days. Start with a short lookback."
-            },
-            "conditionalVisibility": {
-              "parameterName": "Documentation",
-              "comparison": "isEqualTo",
-              "value": "On"
+              "json": "### 🗂️ Supported Resources and Evidence\r\n\r\nThe main resource inventory deliberately covers the following **16 resource types across nine workload plans**, rather than every Azure resource that can emit logs. Only resource types present in the selected scope appear in the picker. AzureDiagnostics is checked alongside the supported dedicated sources in every row below.\r\n\r\n| Supported resource types | Defender workload plan | Log evidence checked |\r\n|---|---|---|\r\n| Storage accounts | Storage | AzureDiagnostics plus StorageBlobLogs, StorageFileLogs, StorageQueueLogs, and StorageTableLogs. |\r\n| Key Vault | Key Vault | AzureDiagnostics plus AZKVAuditLogs and AZKVPolicyEvaluationDetailsLogs. Audit/access signals are identified separately. |\r\n| App Service apps; App Service slots | App Service | AzureDiagnostics plus supported App Service logs, FunctionAppLogs, and LogicAppWorkflowRuntime. Apps include Function Apps and Logic Apps Standard. |\r\n| Kubernetes (AKS); Arc-enabled Kubernetes; Container Registry | Containers | AzureDiagnostics, AKSAudit, AKSAuditAdmin, AKSControlPlane, ContainerLog/ContainerLogV2, and registry login/repository events. Arc workload evidence must be attributable to its resource ID; Arc control-plane auditing is not assessed. |\r\n| SQL servers; SQL databases; SQL Managed Instances; SQL MI databases | Azure SQL Databases | AzureDiagnostics, including SQLSecurityAuditEvents where observed. Parent and database resources are assessed separately. |\r\n| MySQL Flexible Server; PostgreSQL Flexible Server | Open-Source Relational Databases | AzureDiagnostics plus supported MySQL audit/slow logs and PostgreSQL server, query-store, and statistics tables. Server logs alone do not establish pgAudit coverage. |\r\n| Cosmos DB | Azure Cosmos DB | AzureDiagnostics plus supported CDB request, query-runtime, partition, and control-plane tables. Statistics alone do not prove auditing. |\r\n| API Management | APIs | AzureDiagnostics plus gateway, WebSocket, developer-portal audit, LLM, and MCP tables. Service-level evidence does not establish coverage of every API. |\r\n| AI Services / OpenAI | AI Services | AzureDiagnostics for accounts of kind OpenAI or AIServices. Metadata does not establish prompt/response capture or model protection. |\r\n\r\n> ⚠️ **These are resource-family mappings, not eligibility guarantees.** Supported SKUs, regions, hosting models, plan components, resource overrides, exclusions, API onboarding, and sensor health need separate verification. Registry scanning can also be available through CSPM.\r\n\r\n---\r\n\r\n### 🚦 Reading the Comparison\r\n\r\n| Observed logs | Subscription plan | Interpretation |\r\n|---|---|---|\r\n| Yes | Enabled | Both signals present: a workload plan is configured and raw records are available in the assessed scope. This is not a protection-health certification. |\r\n| Yes | Disabled | Raw investigation evidence is present, but the mapped subscription plan is disabled. |\r\n| Not observed | Enabled | A workload plan is configured, but no matching raw records were found in the selected Log Analytics scope. Defender may provide separate evidence outside Log Analytics. |\r\n| Not observed | Disabled | Potential visibility gap in this assessment. Check quiet resources, other destinations, and resource-level settings before concluding that visibility is absent. |\r\n| Either | Unknown | Subscription pricing configuration is missing or unrecognized. Unknown is never treated as Disabled. |\r\n\r\n> 💡 For example, a **Key Vault** with an enabled plan but no observed audit records has a different investigation-evidence position from a vault with both. Neither the plan setting nor a single log record proves complete protection or category coverage.\r\n\r\n---\r\n\r\n### 📊 What the Statistics Count\r\n\r\n- **Common denominator:** each pie counts the same returned supported resource IDs, not log records or every tenant asset.\r\n- **One asset, one contribution:** one asset contributes once, even when it has multiple tables, records, or source workspaces.\r\n- **Resource identity:** database and deployment-slot IDs count separately; only Storage child-service IDs roll up to their account.\r\n- **Three views:** the three pies show both signals, observed logs, and enabled subscription plans; unknown configuration remains explicit.\r\n- **Grid filters:** filtering a detail grid does not change the summary denominator.\r\n- **Assessment scope:** subscription, resource-type, workspace, and lookback selections define the assessment.\r\n\r\n### 🔎 Investigation Details\r\n\r\nThe detail views are ordered **combined coverage**, **log coverage**, then **Defender subscription plans**.\r\n\r\n- **Tables / Categories:** identify the observed sources.\r\n- **Investigation signals:** highlight recognized audit/access evidence; an empty set does not prove that no useful logs exist.\r\n- **Last seen:** latest event timestamp.\r\n- **Records:** not deduplicated across tables or workspaces.\r\n- **Workspaces:** source workspace identifiers, not display names.\r\n\r\n> 🛡️ **Resource protection remains Not verified.**"
             },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "PaaSGuide"
+            "name": "PaaSGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -1118,9 +1158,14 @@
           {
             "type": 1,
             "content": {
-              "json": "**Coverage statistics:** each complete pie represents the same total of returned supported resource IDs in the selected subscriptions and resource types. The first pie shows assets with both observed logs and an enabled Defender subscription plan; the next two show logs and Defender separately. Counts are assets, not records. Database and slot child resources count separately. Defender configuration is not verified resource protection. Gray slices preserve unknown plan states. Logs use the selected workspaces and lookback. Grid filtering does not change these totals; errors, partial results and truncation invalidate conclusions."
+              "json": "### 📊 Coverage Statistics\r\n\r\n| Both signals | Log evidence | Defender configuration |\r\n|---|---|---|\r\n| Observed logs **and** an enabled subscription plan | Resources with matching records in the selected scope | Resources whose mapped subscription plan is enabled |\r\n\r\n**Same denominator:** supported resource IDs returned for the selected scope. Unknown plan states remain separate.\r\n\r\n> ⚠️ Both signals do not establish effective resource protection. Errors, partial results, and truncation invalidate coverage conclusions."
             },
-            "name": "CoverageSummaryGuide"
+            "name": "CoverageSummaryGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -1495,13 +1540,18 @@
           {
             "type": 1,
             "content": {
-              "json": "### Coverage boundaries\r\nThe resource grid covers **16 Azure/Arc resource types** mapped to nine workload plans. It checks **AzureDiagnostics plus 47 named tables**, including legacy and current Container Insights workload logs for AKS and Arc-connected clusters. AI accounts are limited to OpenAI and AIServices kinds. Eligibility still depends on the resource's actual configuration.\r\n\r\nThe subscription overview below includes all **12 current workload plan families**, plus **legacy standalone DNS**. Servers P1/P2 and SQL on machines include Azure/Arc scenarios; the separate Virtual Machines tab still checks heartbeat, not guest security or SQL auditing. Resource Manager's log evidence remains in Activity Logs. DNS is also bundled with Servers P2; neither the plan overview nor Traffic Analytics verifies raw DNS-query capture. Standalone DNS Free/Unknown does not mean bundled DNS protection is absent.\r\n\r\n**Not assessed:** effective per-resource protection, API-level onboarding/log coverage, Arc Kubernetes control-plane auditing, AI model-registry scanning, guest SQL audit ingestion, category completeness, other destinations, and XDR telemetry. AWS/GCP connector inventory is not queried; Arc-connected resources are evaluated only in their Azure subscription context. Entra, Workspace Audit and Network Flow Logs remain independent views. CSPM and DevOps posture are outside this workload-threat-protection comparison.\r\n\r\n**Warning:** all resource and query results are permission-scoped and may be truncated at service or grid limits. A failed/partial query is not a negative result. Review warnings before interpreting missing evidence."
+              "json": "### 🧭 Coverage Boundaries and Plan Overview\r\n\r\nThe main comparison scans **48 named sources: AzureDiagnostics plus 47 other tables** for the 16 supported resource types above. Generic PaaS families such as Firewall, Application Gateway, Data Factory, and messaging services are not included in this Defender workload comparison. Their absence is a scope decision, not a statement that their logs are unimportant.\r\n\r\n### 🛡️ Subscription Plan Overview\r\n\r\nThe subscription overview lists **12 current workload plan families plus legacy standalone DNS**, independently of the resource-type picker. Its broader list includes Servers, SQL Servers on Machines, and Resource Manager. Servers P1/P2 and SQL on machines include Azure/Arc scenarios; the VM tab still checks heartbeat, not guest security or SQL audit collection. Resource Manager's log evidence is in Activity Logs. DNS is also bundled with Servers P2; the legacy DNS row does not establish bundled protection or raw DNS-query capture.\r\n\r\n---\r\n\r\n### 🚧 Not Assessed\r\n\r\n**Outside this evidence check:** effective per-resource protection, all log categories, retention sufficiency, API-level onboarding, Arc Kubernetes control-plane auditing, AI model-registry scanning, guest SQL auditing, other log destinations, or Defender XDR telemetry. AWS/GCP connector inventory, CSPM, and DevOps posture are outside this comparison.\r\n\r\n> ⚠️ **Result limits:** all results are permission-scoped and subject to service/grid limits. A failed or partial query is not a negative result. Review runtime warnings before interpreting missing evidence."
             },
             "styleSettings": {
               "margin": "16px 0 8px",
               "padding": "0"
             },
-            "name": "PaaSCoverageNotes"
+            "name": "PaaSCoverageNotes",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -1577,23 +1627,28 @@
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "ActivityHeading"
+            "name": "ActivityHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 1,
             "content": {
               "json": "### Subscription evidence\r\nCoverage is based on AzureActivity records found during the lookback period. It does not indicate whether every Activity Log category is configured for export.\r\n\r\n[Azure Activity connector](https://learn.microsoft.com/en-us/azure/sentinel/data-connectors-reference#azure-activity)"
             },
-            "conditionalVisibility": {
-              "parameterName": "Documentation",
-              "comparison": "isEqualTo",
-              "value": "On"
-            },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "ActivityGuide"
+            "name": "ActivityGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -1709,7 +1764,12 @@
               "margin": "16px 0 8px",
               "padding": "0"
             },
-            "name": "ActivityConnectorHeading"
+            "name": "ActivityConnectorHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 11,
@@ -1756,23 +1816,28 @@
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "EntraHeading"
+            "name": "EntraHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 1,
             "content": {
               "json": "### Identity log evidence\r\nCoverage reflects records found in the selected workspaces and lookback period. Availability depends on tenant configuration, licensing, and activity. Some tables do not carry a tenant ID in the fields used by this workbook.\r\n\r\n[Microsoft Entra activity logs in Azure Monitor](https://learn.microsoft.com/en-us/entra/identity/monitoring-health/howto-integrate-activity-logs-with-azure-monitor-logs)"
             },
-            "conditionalVisibility": {
-              "parameterName": "Documentation",
-              "comparison": "isEqualTo",
-              "value": "On"
-            },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "EntraGuide"
+            "name": "EntraGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -1835,7 +1900,12 @@
               "margin": "16px 0 8px",
               "padding": "0"
             },
-            "name": "EntraConnectorHeading"
+            "name": "EntraConnectorHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 11,
@@ -1915,23 +1985,28 @@
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "WorkspaceHeading"
+            "name": "WorkspaceHeading",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 1,
             "content": {
               "json": "### Query audit evidence\r\nLAQueryLogs records indicate query auditing activity during the lookback period. Workspace settings such as retention and daily quota are inventory metadata, not proof of audit-log ingestion.\r\n\r\n[Log Analytics query auditing](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/query-audit)"
             },
-            "conditionalVisibility": {
-              "parameterName": "Documentation",
-              "comparison": "isEqualTo",
-              "value": "On"
-            },
             "styleSettings": {
               "margin": "8px 0",
               "padding": "0"
             },
-            "name": "WorkspaceGuide"
+            "name": "WorkspaceGuide",
+            "conditionalVisibility": {
+              "parameterName": "Documentation",
+              "comparison": "isEqualTo",
+              "value": "On"
+            }
           },
           {
             "type": 3,
@@ -2123,7 +2198,12 @@
         "margin": "16px 0 8px",
         "padding": "0"
       },
-      "name": "References"
+      "name": "References",
+      "conditionalVisibility": {
+        "parameterName": "Documentation",
+        "comparison": "isEqualTo",
+        "value": "On"
+      }
     }
   ],
   "fromTemplateId": "sentinel-AzureLogCoverage",
