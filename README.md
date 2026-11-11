@@ -1,30 +1,63 @@
 # Azure Log Coverage
 
-[AzureLogCoverage-DedicatedTables.json](AzureLogCoverage-DedicatedTables.json) is an Azure Monitor Workbook for comparing resource inventory with observed Log Analytics data. The **Defender Workloads & Logs** tab adds Defender for Cloud subscription configuration alongside that evidence, with logs as the primary grouping.
+## Overview
 
-## Use the workbook
+[AzureLogCoverage-DedicatedTables.json](AzureLogCoverage-DedicatedTables.json) helps security and operations teams identify potential Azure logging gaps by comparing resource inventory, observed Log Analytics records, and Microsoft Defender for Cloud subscription plan configuration.
+
+The main **Defender Workloads & Logs** view deliberately focuses on **16 supported Azure/Arc resource types mapped to nine workload plans**, including resources whose plans are disabled or unknown. Separate tabs assess VM heartbeats, Azure Activity Logs, Network Flow Logs, Microsoft Entra ID logs, and workspace query auditing. This is not a universal Azure logging inventory.
+
+> [!NOTE]
+> Use this workbook alongside the [Sentinel Maturity Model](https://github.com/mathijsvermaat/Sentinel-Maturity) to identify Azure workload logging gaps and compare observed evidence with Defender subscription configuration. Findings support connector-onboarding and investigation-readiness assessments; they do not assign a maturity tier, validate retention, or certify effective protection.
+
+## Key features and use cases
+
+- **Coverage comparison:** distinguish resources with both observed logs and an enabled Defender subscription plan, one signal, neither signal, or unknown plan configuration.
+- **Shared and dedicated logs:** check `AzureDiagnostics` together with supported resource-specific tables, rather than assuming only one format is used.
+- **Investigation evidence:** review observed tables, categories, audit/access signals, timestamps, record counts, and source workspaces.
+- **Coverage statistics:** compare three asset-based summaries with resource-level combined and logs-only views.
+- **Interactive filtering:** select subscriptions, workspaces, lookback, and friendly resource-type labels; filter detail rows by coverage status.
+- **Guidance and follow-up:** use **Show help** for scope and interpretation, or hide the text for a compact view. Diagnostic-settings links open configuration for review without enabling logging.
+
+## Prerequisites
+
+- Read access to the Azure resources and subscriptions being assessed.
+- Read access to Defender pricing configuration, including `Microsoft.Security/pricings/read`.
+- Permission to query the selected Log Analytics workspaces and relevant tables.
+- Logs already collected in those workspaces. Importing the workbook does not enable collection.
+- For the deployment path below, access to Microsoft Sentinel Workbooks in the [Microsoft Defender portal](https://security.microsoft.com/). The coverage queries themselves do not require Sentinel enablement; Sentinel-specific connector navigation requires a Sentinel-enabled workspace.
+
+The assessment queries are **read-only**. They do not change diagnostic settings, Data Collection Rules (DCRs), Defender plans, or policies. Navigation and onboarding actions are separate from the evidence checks.
+
+## Deployment and first use
 
 1. In the **Microsoft Defender portal**, open **Microsoft Sentinel > Workbooks > Add workbook**, then select **Edit**.
-2. Open **Advanced editor** and replace its contents with the workbook JSON.
-3. Select **Apply**, then **Done Editing**. Select the management groups, subscriptions, and Log Analytics workspaces to assess. The preview remains unsaved until you explicitly save it.
-4. Choose a lookback period. The default is 48 hours; begin with a short interval for larger environments.
-5. Review query errors, warnings, and truncation before interpreting missing evidence. **Show help** defaults to **Show** and provides the scope, mappings, interpretation, and limitations.
+2. Open **Advanced editor** and replace its contents with [AzureLogCoverage-DedicatedTables.json](AzureLogCoverage-DedicatedTables.json).
+3. Select **Apply**, then **Done Editing**.
+4. Select the management groups and subscriptions to inventory. Explicitly select the Log Analytics workspaces containing the expected evidence; do not assume the default **Any one** selection is the intended workspace.
+5. Choose the lookback and resource types. Start with one known subscription and workspace to validate the results.
+6. Confirm the statistics and detail views load. Review errors, partial results, and truncation before interpreting missing evidence.
+7. Save the workbook when satisfied with the assessment scope. The preview remains unsaved until you explicitly save it.
 
-Read access to the selected resources and Defender pricing configuration (`Microsoft.Security/pricings/read`), plus permission to query the selected workspaces and tables, is required. Microsoft Sentinel is optional for the coverage queries. Existing Sentinel-specific navigation requires a Sentinel workspace.
+### Initial filters
 
-The queries are read-only. Diagnostic settings, collection rules, Defender plans, and policies are not changed automatically. Existing navigation/onboarding actions remain separate from the evidence checks.
+| Control | Purpose |
+| --- | --- |
+| Management groups / Subscriptions | Define the Azure inventory scope. |
+| Workspace scope | Choose Sentinel-enabled workspaces or all eligible Log Analytics workspaces for the picker. |
+| Log Analytics workspaces | Select where to look for evidence; this is separate from the resource inventory scope. |
+| Lookback period | Defaults to **48 hours**. Begin with a short interval for larger environments. |
+| Resource type | Select one or more friendly labels, such as **Key Vault** or **Storage accounts**. **All** includes supported types present in scope. |
+| Show help | Defaults to **Show**; use **Hide** for compact mode. |
 
-## Help and compact mode
+### Help and compact mode
 
-The single **Show help** control appears before the introduction and replaces **Detailed guidance**. It defaults to **Show**. The introduction explicitly explains why the main resource comparison is scoped to Defender for Cloud workload protection: 16 supported Azure/Arc resource types mapped to nine workload plans, including resources whose plans are disabled or unknown.
+**Show help** appears before the introduction. Its icon-led sections, tables, warning callouts, and examples explain the scope and evidence. Select **Hide** to remove all explanatory Markdown across all six tabs, including headings, coverage notes, action descriptions, and references.
 
-The workload guidance includes a resource-type / plan / log-evidence matrix, the five comparison states, a Key Vault example, the statistics denominator, and coverage boundaries. It distinguishes subscription configuration from effective resource protection, and observed records from verified diagnostic settings. The five other tabs retain their separate assessment scope.
+Scope controls, tabs, chart titles, legends, grids, action links, and runtime errors remain available. Help visibility does not change queries or scope selections. Select **Show** to restore the guidance.
 
-Help uses icon-led headings, horizontal dividers, bold lead-ins, short lists, warning callouts, and source/mapping tables. The introduction retains the shield title and distinct Prerequisites, Purpose, Key Objectives, and Data Sources sections. These use native workbook Markdown and follow the portal theme.
+## Understanding the results
 
-Select **Hide** for compact mode. All explanatory Markdown disappears across all six tabs, including the introduction, standalone headings, guidance, coverage notes, action descriptions, and references. Scope controls, tabs, the resource-type picker, chart titles, legends, grids, action links, and runtime errors remain available. Help visibility does not change queries or scope selections. Select **Show** to restore the text.
-
-## Views
+### Workbook views
 
 | Tab | Assessment |
 | --- | --- |
@@ -35,71 +68,97 @@ Select **Hide** for compact mode. All explanatory Markdown disappears across all
 | Microsoft Entra ID | Identity log sources |
 | Workspace Audit | Log Analytics query audit evidence |
 
-The existing five separate views are unchanged by the Defender enhancement. In particular, heartbeat is **not** guest security-log or SQL-audit coverage, and Traffic Analytics is **not** proof of raw DNS-query capture.
+The five companion tabs retain their own inventories and evidence checks. Heartbeat is **not** guest security-log or SQL-audit coverage, and Traffic Analytics is **not** proof of raw DNS-query capture.
 
-## Defender and logs
+### Coverage statistics and detail views
 
-The resource grid is grouped first by **Log evidence**, then Defender plan and subscription. It preserves resources with no matching logs and includes disabled or unknown plans.
+The workload tab presents these views in order:
 
-The **Resource type** picker shows alphabetically sorted friendly labels such as **Key Vault**, **Storage accounts**, and **Kubernetes (AKS)**. Selection still filters by the original Azure resource-type IDs. Multi-select and **All** are retained. **App Service apps** includes Function Apps and Logic Apps Standard, which share the same Azure resource type.
+1. **Coverage statistics:** three donut charts showing **both logs and an enabled Defender plan**, **logs observed**, and **Defender subscription plan enabled**, each against the same assessed-asset total.
+2. **Combined resource coverage:** resource-level log evidence alongside subscription configuration, with traffic-light status. Rows are grouped by log evidence, Defender plan, and subscription.
+3. **Resource log coverage:** a logs-only grid with sources, investigation signals, timestamps, record counts, workspaces, and diagnostic-settings navigation.
+4. **Defender subscription plans:** subscription configuration, including plan families not represented in the resource grid.
 
-The first visible columns in the combined grid are **Resource**, **Diagnostic settings**, and **Defender + Logs**. **Open settings** opens the resource's diagnostic-settings blade, including for resources without observed logs; it does not enable logging. **Defender + Logs** displays the traffic-light `Coverage status`, derived from the merged resource inventory and Log Analytics evidence. The longer calculated `Comparison` text remains in the underlying dataset as a hidden helper.
+The denominator counts **returned supported resource IDs**, not log records or every tenant asset. Database and slot child resources count separately; multiple tables, records, or workspaces do not multiply a resource's contribution. Unknown plan states remain explicit. An empty inventory is not applicable, not 100% coverage.
 
-### Summary and views
+Subscription and resource-type filters define the resource inventory; workspace and lookback selections define the log evidence. Filtering a detail grid does not change the summary totals.
 
-The workload tab now presents these views in order:
-
-1. **Coverage statistics:** three statistics-only pie charts, ordered **both logs and Defender plan enabled / total assets**, **logs observed / total assets**, and **Defender subscription plan enabled / total assets**. Each complete pie represents the same assessed-asset total. Legends and metrics distinguish covered, not covered, and (where applicable) unknown configuration. There is no expandable summary table.
-2. **Combined resource coverage:** resource-level log evidence alongside subscription configuration, with traffic-light icons.
-3. **Resource log coverage:** a separate logs-only grid with observed/missing evidence, tables, categories, investigation signals, last seen, record counts, source workspaces, and diagnostic-settings navigation. Defender columns are omitted from this view.
-4. **Defender subscription plans:** the existing subscription configuration overview, including plans not represented by resource rows.
-
-The denominator is the number of returned supported resource IDs under the selected subscriptions and resource types, not every asset in the tenant. Database and slot child resources count separately. Multiple records, tables, or source workspaces do not multiply a resource's contribution. Log evidence follows the selected workspaces and lookback. An empty inventory shows a not-applicable message, not 100% coverage.
-
-The pies reuse the existing inventory and log query results without another source query. Each asset contributes a single numeric `Assets = 1` value, grouped explicitly by `Both outcome`, `Log evidence`, or `Subscription plan`. The native chart sums these values into category slices and displays their total in the donut center. Unknown plan states remain a separate category. The total is never an extra slice alongside covered assets. Explicit grouping prevents Defender from choosing resource IDs as slices or showing only the first numeric coverage flag. Their totals are independent of filtering either resource grid. Query failures, partial results, and resource/query row limits can invalidate these totals; review warnings before interpreting the visuals.
-
-### Traffic lights
+### Coverage categories
 
 | Color | Observed logs | Subscription plan | Interpretation |
 | --- | --- | --- | --- |
 | Green - Both | Yes | Enabled | Both signals present |
 | Orange - Partial | Yes | Disabled | Logs only at this comparison scope |
-| Orange - Partial | No | Enabled | Enabled subscription plan only |
-| Red - Neither | No | Disabled | Neither signal present in this comparison |
+| Orange - Partial | Not observed | Enabled | Enabled subscription plan only |
+| Red - Neither | Not observed | Disabled | Neither signal present in this comparison |
 | Gray - Unknown | Either | Unknown | Plan configuration is unresolved |
 
-Use the combined grid's built-in filter with **Green**, **Orange**, **Red**, or **Gray** to filter by status. Color names are part of the underlying visible values, so the filter does not depend on recognizing the icon. Clear the filter to restore all rows. Filtering the combined grid does not change the summary or the separate logs and Defender views.
+Use the combined grid's built-in filter with **Green**, **Orange**, **Red**, or **Gray**. Color names accompany the icons, so interpretation does not depend on color alone. Clear the filter to restore all rows; the separate logs and Defender views are unaffected.
 
-These colors are not verified protection-health ratings. In particular, red means no observed Log Analytics records and a disabled subscription plan, not proof that no logging, resource-level protection, or other security visibility exists. Unknown plan states are never colored red or green.
+### Configuration versus protection and evidence
 
-| Subscription plan | Logs observed | Meaning |
-| --- | --- | --- |
-| Enabled | Yes | Subscription plan enabled; resource-attributed logs observed |
-| Enabled | No | Subscription plan enabled; logs not observed in the selected scope |
-| Disabled | Yes | Subscription plan disabled; resource-attributed logs observed |
-| Disabled | No | Subscription plan disabled; logs not observed in the selected scope |
-| Unknown | Either | Missing or unrecognized plan configuration; log evidence remains independent |
+> [!IMPORTANT]
+> These colors are configuration/evidence comparisons, not protection-health or maturity ratings. Red does not prove that no logging, resource-level protection, or other security visibility exists. Unknown is never treated as Disabled.
 
-**These are configuration comparisons, not effective protection certifications.** Standard pricing maps to Enabled, Free to Disabled, and missing/unrecognized pricing to Unknown. Only subscription-level pricing records are used; resource-level records cannot overwrite that subscription state.
+Defender **Standard** pricing maps to Enabled, **Free** to Disabled, and missing/unrecognized pricing to Unknown. Only subscription-level pricing records are used; resource-level records cannot overwrite that subscription state.
 
-Resource protection is explicitly **Not verified**. Resource overrides, exclusions, plan components, eligible SKUs/regions, API onboarding, and sensor health require separate checks. An enabled subscription is not sufficient to establish all of these conditions. Conversely, subscription Free does not exclude resource-level enablement or protection through another product.
+Resource protection remains **Not verified**. Overrides, exclusions, plan components, eligible SKUs/regions, API onboarding, and sensor health require separate checks. Subscription Free does not exclude resource-level enablement or protection through another product.
 
-Neither missing logs nor a disabled subscription plan establishes an absolute absence of security visibility. Other workspaces, destinations, Defender/XDR evidence, and quiet workloads can change the interpretation. Raw logs alone also do not supply Defender's detections.
+Observed records do not establish complete category coverage or sufficient retention. Missing records can reflect a quiet resource, another workspace/destination, unsupported sources, or access issues. Raw logs alone do not supply Defender's detections, and Defender/XDR evidence may exist outside Log Analytics.
+
+For example, a **Key Vault** with an enabled plan but no observed audit records has a different investigation-evidence position from a vault with both signals. Neither the plan setting nor one record proves complete protection or logging coverage.
 
 ### Evidence columns
 
-- **Tables / Categories:** observed shared and resource-specific sources. Category falls back to a known mapping or table name when unavailable.
-- **Investigation signals:** recognized audit/access evidence, distinct from generic log presence. An empty set does not establish that all other records are useless.
-- **Last seen:** latest observed `TimeGenerated`, not ingestion time.
-- **Records:** records in the selected window, without cross-table/workspace event deduplication.
-- **Workspaces:** source `TenantId` workspace identifiers where available; not workspace display names.
-- **Defender plan / Subscription plan / Subplan:** the mapped workload plan and subscription configuration.
-- **Verification needed:** workload-specific limitations and checks before concluding protection or investigation readiness.
-- **Diagnostic settings:** a navigation action, not an enabled-state indicator.
+| Column | Meaning |
+| --- | --- |
+| Tables / Categories | Observed shared and resource-specific sources; category falls back to a known mapping or table name when unavailable. |
+| Investigation signals | Recognized audit/access evidence, distinct from generic log presence. An empty set does not mean all other records are useless. |
+| Last seen | Latest observed `TimeGenerated`, not ingestion time. |
+| Records | Records in the selected window, without cross-table/workspace event deduplication. |
+| Workspaces | Source `TenantId` workspace identifiers where available, not display names. |
+| Defender plan / Subscription plan / Subplan | Mapped workload plan and subscription configuration. |
+| Verification needed | Workload-specific checks before concluding protection or investigation readiness. |
+| Diagnostic settings | **Open settings** navigates to the resource's diagnostic-settings blade; it is not an enabled-state indicator and does not enable logging. |
 
-Resource identity is matched using the full normalized ARM ID. Only Storage Blob/File/Queue/Table service IDs roll up to their storage account. Databases, deployment slots, and clusters retain their own identities; same-named resources in different groups or subscriptions cannot match solely by name.
+## Troubleshooting and limitations
 
-## Scope
+| Symptom | Checks and next steps |
+| --- | --- |
+| Empty resource inventory | Check subscriptions, permissions, and supported resource types. An empty result is not full coverage. |
+| Logs not observed | Confirm the intended workspaces and lookback, recent resource activity, collection configuration, and supported tables before concluding logging is disabled. |
+| Unknown Defender configuration | Check pricing read access and configuration availability. Do not reinterpret Unknown as Free. |
+| No resources selected after import | Explicitly select the scope, allow parameter lookups to resolve, and retry or refresh the failed control. Review the successful result before interpreting coverage. |
+| Query errors, missing permissions, or partial results | Resolve the errors first. An empty typed source and fuzzy union tolerate absent tables, but not every execution or access failure. |
+| Truncated or unexpectedly small results | Narrow the scope. Grids have a 10,000-row limit; service limits and permission-scoped inventory can restrict results earlier. |
+| Basic/Auxiliary table restrictions | Check supported query scope and charges. Basic-only queries are limited to the past 30 days. |
+
+Diagnostic-setting and DCR configuration is **not inspected**. Other log destinations, Defender XDR hunting data, category completeness, and retention sufficiency are outside the evidence check. The workbook does not validate Defender for Cloud alert delivery to Sentinel. Resource Graph eventual consistency also applies.
+
+### Validation status
+
+Read-only Defender portal testing on 10-11 November 2026 exercised all six tabs, the three statistics charts, resource filtering, and Show/Hide guidance. One subscription and workspace over 48 hours returned 28 assets: 9 with observed logs, 9 with both signals, and 28 with an enabled plan. The local development suite passes 363 contract/model checks, including disabled/unknown and empty-inventory cases; it is not distributed with the workbook and does not execute live KQL/ARG.
+
+> [!WARNING]
+> Validate against representative data before operational use. Multi-subscription/workspace behavior, restricted permissions, every supported resource type, and every navigation action still require representative testing. A successful lab preview is not broad production validation.
+
+## How it works / technical details
+
+### Data and correlation
+
+| Source | Role |
+| --- | --- |
+| Azure Resource Graph | Resource/subscription inventory, VM extensions, workspace metadata, and Network Watcher flow-log configuration. |
+| Subscription-level `Microsoft.Security/pricings` | Defender plan configuration returned through Resource Graph. |
+| `AzureDiagnostics` and supported dedicated tables | Resource-attributed log evidence for the workload comparison. |
+| `Heartbeat`, `AzureActivity`, Entra reference tables, `LAQueryLogs` | Evidence for the separate VM, Activity, Entra, and Workspace Audit tabs. |
+| `AzureNetworkAnalytics_CL` and `NTANetAnalytics` | Legacy/current Traffic Analytics evidence for Network Flow Logs. |
+
+Resource identity is matched using the **full normalized ARM ID**. Only Storage Blob/File/Queue/Table service IDs roll up to their storage account. Databases, deployment slots, and clusters retain their own identities; same-named resources in different groups or subscriptions cannot match solely by name. A left outer merge preserves inventory rows without matching logs.
+
+The three charts reuse the inventory/log merge. Each resource contributes `Assets = 1`, grouped by `Both outcome`, `Log evidence`, or `Subscription plan`. The donut center shows the assessed total, not an extra slice. Detail-grid filtering does not change that denominator.
+
+### Supported workloads
 
 The resource grid contains **16 Azure/Arc resource types**, associated with nine workload plan families. It queries **48 named log sources**: `AzureDiagnostics` plus 47 other tables, including `ContainerLog` and `ContainerLogV2`. Both shared and dedicated formats are checked together.
 
@@ -115,6 +174,10 @@ The resource grid contains **16 Azure/Arc resource types**, associated with nine
 | APIs | API Management services | Gateway, developer portal, WebSocket, LLM, and MCP logs. Service-level evidence does not establish individual API onboarding or logging coverage. |
 | AI Services | Cognitive Services accounts of kind OpenAI or AIServices | AzureDiagnostics audit/request categories. Metadata is not proof of prompt/response capture or model protection. |
 
+The resource-type picker uses friendly labels while retaining the original Azure type IDs for filtering. **App Service apps** includes Function Apps and Logic Apps Standard, which share the same resource type.
+
+### Subscription plan overview and scope boundaries
+
 The **subscription plan overview** lists all **12 current workload plan families**, plus **legacy standalone DNS**, for the selected subscriptions. It is independent of the resource-type selector and does not hide plans just because no corresponding resource is inventoried. Besides the nine families above, it includes:
 
 - **Servers P1/P2:** Azure/Arc heartbeat remains in Virtual Machines; guest security/event/Syslog coverage is not assessed here.
@@ -124,34 +187,23 @@ The **subscription plan overview** lists all **12 current workload plan families
 
 AWS/GCP connector inventory is not queried. Arc resources are evaluated in their Azure subscription context, including directly connected Kubernetes clusters. CSPM and DevOps posture are excluded from the workload-plan overview. AI model-registry scanning is not assessed.
 
-Compared with the earlier general-purpose PaaS inventory, resource types decreased from **29 to 16**: AI accounts and Arc-connected Kubernetes were added, and these 15 types were removed from the resource grid:
+Other general-purpose Azure services, such as Firewall, Application Gateway, Data Factory, messaging, Purview, and Recovery Services, are outside the main workload inventory. `AzureDiagnostics` can still contain records from excluded families, but those resources do not appear in the merged resource view. Their absence is a scope decision, not a statement that their logs are unimportant.
 
-- CDN profiles (including Front Door Standard/Premium), classic Storage accounts, Data Factory, IoT Hub, and Event Hubs namespaces.
-- Application Gateway, Azure Firewall, Bastion, classic Front Door, network security groups, public IP addresses, and Traffic Manager.
-- Purview accounts, Recovery Services vaults, and Service Bus namespaces.
-
-Named log sources decreased from **101 to 48**: 55 dedicated sources for those removed families were removed, while `ContainerLog` and `ContainerLogV2` were added. `AzureDiagnostics` remains a shared source and can still contain records from excluded families, but those resources do not appear in the merged inventory. This does not imply their logs are unimportant; they are outside the selected Defender workload-plan comparison. The other five tabs were preserved, including the separate Network Flow Logs view.
-
-## Limits and validation
-
-- Observed records do not certify every category, endpoint, Storage service, investigation requirement, or retention period.
-- Diagnostic-setting and DCR configuration is not inspected. Storage/Event Hubs destinations and Defender XDR hunting data are outside the selected Log Analytics evidence scope.
-- An empty typed source and fuzzy union tolerate absent tables, but not every permission, workspace, or execution failure. Failed/partial queries invalidate negative conclusions.
-- Azure Resource Graph permissions, result limits, and eventual consistency apply. Grids are limited to 10,000 rows, and service limits can apply earlier. Narrow the scope when results are truncated.
-- Basic/Auxiliary scope and query charges apply; Basic-only queries are limited to the past 30 days.
-- The local development copy has an intentionally untracked PowerShell regression suite. It validates JSON, embedded merges, mappings, evidence contracts, and identity/state models, not live KQL/ARG execution.
-- Read-only browser testing in the Microsoft Defender portal on 10 November 2026 verified the three repaired donut charts against a live resource grid. One subscription and one workspace over 48 hours returned 28 assets: 9 with observed logs, 9 with both signals, and 28 with an enabled subscription plan. These are test-scope results, not a coverage claim for other environments.
-- All five other tabs rendered their grids in that smoke test; Entra displayed all 11 reference tables. The Defender subscription overview returned 13 plan rows after retrying a transient "No resources selected" error following JSON import. Retry or refresh a failed control and review its result before interpreting coverage.
-- Read-only Playwright testing in VS Code's integrated Defender browser on 11 November 2026 verified default **Show**, **Hide** across all six tabs with grids retained, and restoration of every expected explanatory block. Screenshots confirmed the mapping table and compact chart layout. The selected lab workspace and 48-hour lookback were retained; both help states showed the same 28 assets, 9 with logs, 9 with both signals, and 28 with an enabled plan. Initial import scope errors cleared after refresh; the workspace was explicitly selected instead of the default **Any one**. The preview remained unsaved with help shown.
-- The help and presentation updates pass 363 local contract/model checks. Structured before/after comparisons confirmed that existing queries, chart/grid settings, scope parameters, tab navigation, actions, and group visibility were unchanged. The restored icon-led layout was also checked in the Defender preview: no text overflow, all explanatory text hidden in compact mode, charts/grids retained, and styled guidance restored with the lab workspace selection intact.
-- Disabled/unknown plan partitions and empty/all/none-covered scopes are covered by local fixtures, not demonstrated by the live scope. Multi-subscription/workspace behavior, restricted permissions, every drilldown/action, and every supported resource type still require representative testing. No workbook was saved and no cloud settings were changed during validation.
-- VS Code reports the existing untrusted remote workbook-schema warning; parsing JSON is not full schema validation.
-
-Before operational use, validate a representative subscription with enabled and disabled plans, missing configuration, both log formats, resources without recent events, API onboarding differences, Arc workloads, and restricted permissions. Confirm grid links, multi-workspace/multi-subscription selection, query warnings, and last-seen values in the portal.
+### Portability
 
 Only the workbook JSON and this README are intended for version control. Local source snapshots, tests, historical notes, and editor settings are not distributed as part of the repository.
 
-## Microsoft Learn references
+Use the repository JSON as the portable template. Before sharing a portal-exported copy, review it for saved subscription/workspace selections and tenant-specific bindings. Internal workbook control and merge IDs are not tenant bindings.
+
+## Related resources
+
+- [Sentinel Maturity Model](https://github.com/mathijsvermaat/Sentinel-Maturity): guidance on connector priorities, retention, and detection rationale to use alongside this evidence assessment.
+- [Layered Detection Approach](https://github.com/mathijsvermaat/Sentinel-Maturity/blob/main/guidance/layered-detection.md): the rationale for retaining independent log evidence alongside security-product detections.
+- [Forensic Readiness](https://github.com/mathijsvermaat/Sentinel-Maturity/blob/main/guidance/forensic-readiness.md): investigation requirements that extend beyond seeing a recent log record.
+- [Sentinel Maturity Assessment Checklist](https://mathijsvermaat.github.io/sentinel-maturity-assessment.html): review findings against relevant assessment items and record follow-up manually. This workbook does not populate the checklist or calculate its maturity results.
+- [Defender AMA Coverage](https://github.com/mathijsvermaat/Defender-AMA-coverage): a complementary endpoint-focused workbook for Defender for Endpoint, AMA telemetry, and DCR correlation; its endpoint categories are not interchangeable with this workbook's workload-plan comparison.
+
+### Microsoft Learn references
 
 - [Parameter-driven conditional visibility](https://learn.microsoft.com/azure/azure-monitor/visualize/workbooks-interactive-reports#set-conditional-visibility)
 - [Workbook pie charts and chart metrics](https://learn.microsoft.com/en-us/azure/azure-monitor/visualize/workbooks-chart-visualizations#pie-charts)
