@@ -4,7 +4,7 @@
 
 [AzureLogCoverage-DedicatedTables.json](AzureLogCoverage-DedicatedTables.json) helps security and operations teams identify potential Azure logging gaps by comparing resource inventory, observed Log Analytics records, and Microsoft Defender for Cloud subscription plan configuration.
 
-The main **Defender Workloads & Logs** view deliberately focuses on **16 supported Azure/Arc resource types mapped to nine workload plans**, including resources whose plans are disabled or unknown. Separate tabs assess VM heartbeats, Azure Activity Logs, Network Flow Logs, Microsoft Entra ID logs, and workspace query auditing. This is not a universal Azure logging inventory.
+The main **Defender Workloads & Logs** view deliberately focuses on **18 supported Azure/Arc resource types mapped to ten workload plans**, including resources whose plans are disabled or unknown. This includes **Defender for Servers** alongside Windows security events and Linux authentication logs. Separate tabs assess VM heartbeats, Azure Activity Logs, Network Flow Logs, Microsoft Entra ID logs, and workspace query auditing. This is not a universal Azure logging inventory.
 
 > [!NOTE]
 > Use this workbook alongside the [Sentinel Maturity Model](https://github.com/mathijsvermaat/Sentinel-Maturity) to identify Azure workload logging gaps and compare observed evidence with Defender subscription configuration. Findings support connector-onboarding and investigation-readiness assessments; they do not assign a maturity tier, validate retention, or certify effective protection.
@@ -13,10 +13,11 @@ The main **Defender Workloads & Logs** view deliberately focuses on **16 support
 
 - **Coverage comparison:** distinguish resources with both observed logs and an enabled Defender subscription plan, one signal, neither signal, or unknown plan configuration.
 - **Shared and dedicated logs:** check `AzureDiagnostics` together with supported resource-specific tables, rather than assuming only one format is used.
+- **Server security evidence:** compare Azure VMs and Arc-enabled servers with Windows `SecurityEvent` records only, or Linux `auth`/`authpriv` Syslog records. `WindowsEvent`, `Event`, heartbeat and generic guest logs do not qualify.
 - **Investigation evidence:** review observed tables, categories, audit/access signals, timestamps, record counts, and source workspaces.
 - **Coverage statistics:** compare three asset-based summaries with resource-level combined and logs-only views.
 - **Interactive filtering:** select subscriptions, workspaces, lookback, and friendly resource-type labels; filter detail rows by coverage status.
-- **Guidance and follow-up:** use **Show help** for scope and interpretation, or hide the text for a compact view. Diagnostic-settings links open configuration for review without enabling logging.
+- **Guidance and follow-up:** use **Show help** for scope and interpretation, or hide the text for a compact view. PaaS diagnostic-settings links open configuration for review without enabling logging; server guest logs use AMA/DCR collection instead.
 
 ## Prerequisites
 
@@ -119,7 +120,7 @@ For example, a **Key Vault** with an enabled plan but no observed audit records 
 | Workspaces | Source `TenantId` workspace identifiers where available, not display names. |
 | Defender plan / Subscription plan / Subplan | Mapped workload plan and subscription configuration. |
 | Verification needed | Workload-specific checks before concluding protection or investigation readiness. |
-| Diagnostic settings | **Open settings** navigates to the resource's diagnostic-settings blade; it is not an enabled-state indicator and does not enable logging. |
+| Diagnostic settings | **Open settings** navigates to a PaaS resource's diagnostic-settings blade; it is not an enabled-state indicator and does not enable logging. Blank for servers, whose guest security logs use AMA/DCR collection. |
 
 ## Troubleshooting and limitations
 
@@ -137,7 +138,9 @@ Diagnostic-setting and DCR configuration is **not inspected**. Other log destina
 
 ### Validation status
 
-Read-only Defender portal testing on 10-11 November 2026 exercised all six tabs, the three statistics charts, resource filtering, and Show/Hide guidance. One subscription and workspace over 48 hours returned 28 assets: 9 with observed logs, 9 with both signals, and 28 with an enabled plan. The local development suite passes 363 contract/model checks, including disabled/unknown and empty-inventory cases; it is not distributed with the workbook and does not execute live KQL/ARG.
+Read-only Defender portal testing on 10-11 November 2026 exercised all six tabs, the three statistics charts, resource filtering, and Show/Hide guidance. Before the server addition, one subscription and workspace over 48 hours returned 28 assets: 9 with observed logs, 9 with both signals, and 28 with an enabled plan. Local development checks cover workbook contracts, identity matching, security-only server predicates, disabled/unknown plans and empty inventories. They are not distributed with the workbook and do not execute live KQL/ARG.
+
+On 18 November 2026, the server extension was tested in an unsaved Defender portal preview. All three charts reconciled to 41 assets, including 13 servers (12 Azure VMs and one Arc machine). One server had `SecurityEvent` evidence; 12 had no qualifying records in the selected 48-hour window. All 13 showed subscription Servers P2. Both detail views, blank server diagnostic-settings actions, retained Key Vault links, and Show/Hide were checked. Positive Linux auth/authpriv cases were fixture-tested but were not demonstrated by live records in this lab window. Windows coverage was subsequently restricted to `SecurityEvent`; regression fixtures verify that `WindowsEvent` and `Event` records do not count, even for the Security channel.
 
 > [!WARNING]
 > Validate against representative data before operational use. Multi-subscription/workspace behavior, restricted permissions, every supported resource type, and every navigation action still require representative testing. A successful lab preview is not broad production validation.
@@ -151,6 +154,7 @@ Read-only Defender portal testing on 10-11 November 2026 exercised all six tabs,
 | Azure Resource Graph | Resource/subscription inventory, VM extensions, workspace metadata, and Network Watcher flow-log configuration. |
 | Subscription-level `Microsoft.Security/pricings` | Defender plan configuration returned through Resource Graph. |
 | `AzureDiagnostics` and supported dedicated tables | Resource-attributed log evidence for the workload comparison. |
+| `SecurityEvent`, `Syslog` | Azure/Arc server evidence: Windows SecurityEvent records only, or Linux auth/authpriv records; not generic guest logs. |
 | `Heartbeat`, `AzureActivity`, Entra reference tables, `LAQueryLogs` | Evidence for the separate VM, Activity, Entra, and Workspace Audit tabs. |
 | `AzureNetworkAnalytics_CL` and `NTANetAnalytics` | Legacy/current Traffic Analytics evidence for Network Flow Logs. |
 
@@ -160,10 +164,11 @@ The three charts reuse the inventory/log merge. Each resource contributes `Asset
 
 ### Supported workloads
 
-The resource grid contains **16 Azure/Arc resource types**, associated with nine workload plan families. It queries **48 named log sources**: `AzureDiagnostics` plus 47 other tables, including `ContainerLog` and `ContainerLogV2`. Both shared and dedicated formats are checked together.
+The resource grid contains **18 Azure/Arc resource types**, associated with ten workload plan families. It queries **50 named log sources**: `AzureDiagnostics` plus 49 other tables, including `ContainerLog` and `ContainerLogV2`. PaaS resources check both shared and dedicated formats; servers use the security-only predicates below.
 
 | Workload plan | Resource inventory | Evidence and boundaries |
 | --- | --- | --- |
+| Servers | Azure VMs and Arc-enabled servers | Windows: `SecurityEvent` only. Linux: `Syslog` where `Facility` is auth/authpriv. `WindowsEvent` and `Event` are not queried. Full machine resource IDs are required. Subscription `VirtualMachines` pricing maps to Servers; the returned P1/P2 subplan is shown. |
 | Storage | Storage accounts | Blob, File, Queue, and Table logs. Queue/Table records do not establish Blob/Files visibility. |
 | Key Vault | Vaults | Shared/dedicated logs; AuditEvent is distinguished from policy evaluation. |
 | App Service | Sites and slots, including Function Apps and Logic Apps Standard | HTTP, audit, application, console, platform, Functions, and workflow logs. Hosting-model eligibility is not certified. |
@@ -176,11 +181,20 @@ The resource grid contains **16 Azure/Arc resource types**, associated with nine
 
 The resource-type picker uses friendly labels while retaining the original Azure type IDs for filtering. **App Service apps** includes Function Apps and Logic Apps Standard, which share the same resource type.
 
+### Server security collection
+
+Select **Server protection (Azure VMs)** and/or **Server protection (Arc)** in the main view. A server with either Windows `SecurityEvent` records or qualifying Linux authentication records contributes one asset to each chart, regardless of record count or number of sources. The **Virtual Machines** tab remains an independent heartbeat/extension assessment.
+
+The two filters distinguish resource inventories, not Defender plans or protection levels. **Azure VMs** selects native `Microsoft.Compute/virtualMachines` resources. **Arc** selects `Microsoft.HybridCompute/machines` connected through Azure Arc, typically on-premises or in other clouds. Both use the same evidence rules and the `VirtualMachines` Defender plan key in each resource's subscription. Select both to assess both inventories.
+
+Use [Windows Security Events via AMA](https://learn.microsoft.com/azure/sentinel/connect-windows-security-events) and [Syslog via AMA](https://learn.microsoft.com/azure/azure-monitor/vm/data-collection-syslog) to review collection and DCRs. Windows evidence is restricted to `SecurityEvent`: `WindowsEvent` and `Event` do not qualify, even when their channel/log is Security. `AzureDiagnostics`, generic System/Application events, other Syslog facilities, `Heartbeat`, and alerts also do not satisfy the server security check.
+
+Records without a usable machine ARM ID are not matched by hostname. Forwarded events can be attributed to a collector rather than the original host; verify event origin before interpreting that machine's evidence. This does not assess audit policy completeness, auditd, every authentication source, MDE onboarding/health, or effective per-machine protection. Non-Arc machines and VM scale-set instances are outside this inventory. Servers P1/P2 configuration alone establishes neither collection nor ingestion-benefit entitlement.
+
 ### Subscription plan overview and scope boundaries
 
-The **subscription plan overview** lists all **12 current workload plan families**, plus **legacy standalone DNS**, for the selected subscriptions. It is independent of the resource-type selector and does not hide plans just because no corresponding resource is inventoried. Besides the nine families above, it includes:
+The **subscription plan overview** lists all **12 current workload plan families**, plus **legacy standalone DNS**, for the selected subscriptions. It is independent of the resource-type selector and does not hide plans just because no corresponding resource is inventoried. Besides the ten families above, it includes:
 
-- **Servers P1/P2:** Azure/Arc heartbeat remains in Virtual Machines; guest security/event/Syslog coverage is not assessed here.
 - **SQL Servers on Machines:** configuration is shown; instance-level protection and guest SQL auditing are not assessed.
 - **Resource Manager:** control-plane ingestion remains in Activity Logs.
 - **DNS:** the row describes the legacy standalone plan only. DNS protection can also be bundled with Servers P2; Free/Unknown in the standalone row does not negate bundled protection. No raw DNS-query assessment is performed.
@@ -210,6 +224,8 @@ Use the repository JSON as the portable template. Before sharing a portal-export
 - [Workbook data sources and merge behavior](https://learn.microsoft.com/en-us/azure/azure-monitor/visualize/workbooks-data-sources#merge)
 - [Reusing query results in different visualizations](https://learn.microsoft.com/en-us/azure/azure-monitor/visualize/workbooks-interactive-reports#reuse-query-data-in-different-visualizations)
 - [Defender for Cloud plans](https://learn.microsoft.com/azure/defender-for-cloud/defender-for-cloud-introduction)
+- [SecurityEvent table](https://learn.microsoft.com/azure/azure-monitor/reference/tables/securityevent)
+- [Syslog facility schema](https://learn.microsoft.com/azure/azure-monitor/reference/tables/syslog)
 - [Defender plan configuration in Resource Graph](https://learn.microsoft.com/azure/defender-for-cloud/resource-graph-samples)
 - [Pricing scope and inheritance](https://learn.microsoft.com/rest/api/defenderforcloud/pricings/get?view=rest-defenderforcloud-2024-01-01)
 - [Key Vault investigation guidance](https://learn.microsoft.com/azure/defender-for-cloud/defender-for-key-vault-introduction)
